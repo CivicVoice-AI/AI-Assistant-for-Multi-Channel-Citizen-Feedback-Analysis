@@ -1,0 +1,886 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CIVIVOICE | Citizen Feedback Intelligence</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Icons -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- ================= SIDEBAR ================= -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-city"></i>
+            </div>
+
+            <div>
+                <h2>CIVIVOICE</h2>
+                <span>Citizen Intelligence</span>
+            </div>
+        </div>
+
+        <nav class="navigation">
+
+            <a href="#overview" class="nav-item active">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Overview</span>
+            </a>
+
+            <a href="#analytics" class="nav-item">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Analytics</span>
+            </a>
+
+            <a href="#feedback" class="nav-item">
+                <i class="fa-solid fa-comments"></i>
+                <span>Feedback Explorer</span>
+            </a>
+
+            <a href="#nlp" class="nav-item">
+                <i class="fa-solid fa-brain"></i>
+                <span>NLP Insights</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="system-status">
+                <span class="status-dot"></span>
+
+                <div>
+                    <strong>System Status</strong>
+                    <small>Prototype Active</small>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <span>Review Version</span>
+                <strong>03</strong>
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="main">
+
+        <!-- HEADER -->
+
+        <header class="topbar">
+
+            <div>
+                <p class="eyebrow">CITIZEN FEEDBACK PLATFORM</p>
+
+                <h1>Dashboard Overview</h1>
+
+                <p class="subtitle">
+                    Multi-channel civic feedback intelligence and analysis.
+                </p>
+            </div>
+
+            <div class="header-right">
+
+                <div class="last-updated">
+                    <i class="fa-regular fa-clock"></i>
+
+                    <div>
+                        <span>Last updated</span>
+                        <strong>Today, 10:42 PM</strong>
+                    </div>
+                </div>
+
+                <button class="profile-button">
+                    <i class="fa-solid fa-user"></i>
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- ================= FILTERS ================= -->
+
+        <section class="filter-panel">
+
+            <div class="filter-heading">
+                <div class="filter-icon">
+                    <i class="fa-solid fa-sliders"></i>
+                </div>
+
+                <div>
+                    <strong>Dashboard Filters</strong>
+                    <span>Filter the feedback dataset</span>
+                </div>
+            </div>
+
+
+            <div class="filters">
+
+                <div class="filter">
+                    <label>Source</label>
+
+                    <select>
+                        <option>All Sources</option>
+                        <option>CPGRAMS</option>
+                        <option>BBMP</option>
+                        <option>Twitter</option>
+                        <option>Survey</option>
+                        <option>Email</option>
+                    </select>
+                </div>
+
+
+                <div class="filter">
+                    <label>Urgency</label>
+
+                    <select>
+                        <option>All Levels</option>
+                        <option>Critical</option>
+                        <option>High</option>
+                        <option>Medium</option>
+                        <option>Low</option>
+                    </select>
+                </div>
+
+
+                <div class="filter">
+                    <label>Location</label>
+
+                    <select>
+                        <option>All Locations</option>
+                        <option>Bengaluru</option>
+                        <option>Other</option>
+                        <option>Unknown</option>
+                    </select>
+                </div>
+
+
+                <button class="reset-button">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    Reset
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= KPI CARDS ================= -->
+
+        <section class="kpi-grid">
+
+            <div class="kpi-card">
+
+                <div class="kpi-top">
+                    <span>Total Feedback</span>
+
+                    <div class="kpi-icon blue">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
+                </div>
+
+                <div class="kpi-value">205,168</div>
+
+                <div class="kpi-description">
+                    <span class="positive">
+                        <i class="fa-solid fa-arrow-up"></i>
+                        12.4%
+                    </span>
+
+                    compared with previous period
+                </div>
+
+            </div>
+
+
+            <div class="kpi-card">
+
+                <div class="kpi-top">
+                    <span>Data Sources</span>
+
+                    <div class="kpi-icon purple">
+                        <i class="fa-solid fa-database"></i>
+                    </div>
+                </div>
+
+                <div class="kpi-value">5</div>
+
+                <div class="kpi-description">
+                    Integrated feedback channels
+                </div>
+
+            </div>
+
+
+            <div class="kpi-card">
+
+                <div class="kpi-top">
+                    <span>High Priority</span>
+
+                    <div class="kpi-icon orange">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                </div>
+
+                <div class="kpi-value">6,810</div>
+
+                <div class="kpi-description">
+                    High and critical feedback
+                </div>
+
+            </div>
+
+
+            <div class="kpi-card">
+
+                <div class="kpi-top">
+                    <span>Locations</span>
+
+                    <div class="kpi-icon green">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                </div>
+
+                <div class="kpi-value">24</div>
+
+                <div class="kpi-description">
+                    Identified locations
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= CHARTS ================= -->
+
+        <section class="charts-grid">
+
+            <!-- SOURCE CHART -->
+
+            <div class="chart-card">
+
+                <div class="card-header">
+
+                    <div>
+                        <h3>Feedback by Source</h3>
+                        <p>Distribution across channels</p>
+                    </div>
+
+                    <button class="more-button">
+                        <i class="fa-solid fa-ellipsis"></i>
+                    </button>
+
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="sourceChart"></canvas>
+                </div>
+
+            </div>
+
+
+            <!-- URGENCY -->
+
+            <div class="chart-card">
+
+                <div class="card-header">
+
+                    <div>
+                        <h3>Urgency Distribution</h3>
+                        <p>Current feedback priority</p>
+                    </div>
+
+                    <button class="more-button">
+                        <i class="fa-solid fa-ellipsis"></i>
+                    </button>
+
+                </div>
+
+                <div class="urgency-container">
+
+                    <div class="donut-wrapper">
+                        <canvas id="urgencyChart"></canvas>
+
+                        <div class="donut-center">
+                            <strong>205K</strong>
+                            <span>Total</span>
+                        </div>
+                    </div>
+
+
+                    <div class="legend">
+
+                        <div>
+                            <span class="legend-dot critical"></span>
+                            <span>Critical</span>
+                            <strong>1,915</strong>
+                        </div>
+
+                        <div>
+                            <span class="legend-dot high"></span>
+                            <span>High</span>
+                            <strong>4,895</strong>
+                        </div>
+
+                        <div>
+                            <span class="legend-dot medium"></span>
+                            <span>Medium</span>
+                            <strong>6,950</strong>
+                        </div>
+
+                        <div>
+                            <span class="legend-dot low"></span>
+                            <span>Low</span>
+                            <strong>10,757</strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= TREND ================= -->
+
+        <section class="chart-card full-width">
+
+            <div class="card-header">
+
+                <div>
+                    <h3>Feedback Trend</h3>
+                    <p>Feedback volume over time</p>
+                </div>
+
+                <div class="chart-period">
+                    <button class="period active">7D</button>
+                    <button class="period">30D</button>
+                    <button class="period">90D</button>
+                    <button class="period">1Y</button>
+                </div>
+
+            </div>
+
+            <div class="trend-chart">
+                <canvas id="trendChart"></canvas>
+            </div>
+
+        </section>
+
+
+        <!-- ================= RECENT FEEDBACK ================= -->
+
+        <section class="feedback-section" id="feedback">
+
+            <div class="section-heading">
+
+                <div>
+                    <p class="eyebrow">FEEDBACK EXPLORER</p>
+
+                    <h2>Recent High-Priority Feedback</h2>
+
+                    <p>
+                        Explore citizen feedback requiring attention.
+                    </p>
+                </div>
+
+                <button class="view-all">
+                    View all
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+            </div>
+
+
+            <div class="feedback-table">
+
+                <div class="table-header">
+                    <span>Feedback</span>
+                    <span>Source</span>
+                    <span>Location</span>
+                    <span>Urgency</span>
+                    <span>Action</span>
+                </div>
+
+
+                <div class="feedback-row">
+
+                    <div class="feedback-content">
+                        <strong>Water supply interruption</strong>
+
+                        <p>
+                            No water supply reported in the area
+                            for the past three days...
+                        </p>
+                    </div>
+
+                    <span class="source-badge">
+                        BBMP
+                    </span>
+
+                    <span>
+                        Bengaluru
+                    </span>
+
+                    <span class="urgency-badge high-badge">
+                        High
+                    </span>
+
+                    <button class="view-button">
+                        View
+                    </button>
+
+                </div>
+
+
+                <div class="feedback-row">
+
+                    <div class="feedback-content">
+                        <strong>Road infrastructure issue</strong>
+
+                        <p>
+                            Large potholes causing traffic problems
+                            near the main road...
+                        </p>
+                    </div>
+
+                    <span class="source-badge">
+                        CPGRAMS
+                    </span>
+
+                    <span>
+                        Bengaluru
+                    </span>
+
+                    <span class="urgency-badge critical-badge">
+                        Critical
+                    </span>
+
+                    <button class="view-button">
+                        View
+                    </button>
+
+                </div>
+
+
+                <div class="feedback-row">
+
+                    <div class="feedback-content">
+                        <strong>Waste collection delay</strong>
+
+                        <p>
+                            Garbage has not been collected from
+                            the locality...
+                        </p>
+                    </div>
+
+                    <span class="source-badge">
+                        Survey
+                    </span>
+
+                    <span>
+                        Bengaluru
+                    </span>
+
+                    <span class="urgency-badge high-badge">
+                        High
+                    </span>
+
+                    <button class="view-button">
+                        View
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= NLP PREVIEW ================= -->
+
+        <section class="nlp-preview" id="nlp">
+
+            <div class="section-heading">
+
+                <div>
+                    <p class="eyebrow">NLP PIPELINE</p>
+
+                    <h2>AI & NLP Insights</h2>
+
+                    <p>
+                        Preview of the intelligence layer being integrated
+                        into CIVIVOICE.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="nlp-grid">
+
+                <div class="nlp-card">
+
+                    <div class="nlp-icon">
+                        <i class="fa-solid fa-face-frown"></i>
+                    </div>
+
+                    <div>
+                        <span>Sentiment Analysis</span>
+                        <strong>Negative</strong>
+                    </div>
+
+                    <small>Prototype</small>
+
+                </div>
+
+
+                <div class="nlp-card">
+
+                    <div class="nlp-icon">
+                        <i class="fa-solid fa-tags"></i>
+                    </div>
+
+                    <div>
+                        <span>Issue Category</span>
+                        <strong>Water Supply</strong>
+                    </div>
+
+                    <small>Prototype</small>
+
+                </div>
+
+
+                <div class="nlp-card">
+
+                    <div class="nlp-icon">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+
+                    <div>
+                        <span>Topic Detection</span>
+                        <strong>Infrastructure</strong>
+                    </div>
+
+                    <small>Prototype</small>
+
+                </div>
+
+
+                <div class="nlp-card">
+
+                    <div class="nlp-icon">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+
+                    <div>
+                        <span>Urgency Detection</span>
+                        <strong>High</strong>
+                    </div>
+
+                    <small>Prototype</small>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- FOOTER -->
+
+        <footer>
+
+            <div>
+                <strong>CIVIVOICE</strong>
+                <span>Citizen Feedback Intelligence Platform</span>
+            </div>
+
+            <span>
+                Review Prototype · Version 0.3
+            </span>
+
+        </footer>
+
+    </main>
+
+</div>
+
+
+<!-- ================= JAVASCRIPT ================= -->
+
+<script>
+
+    // SOURCE CHART
+
+    const sourceCtx =
+        document.getElementById('sourceChart').getContext('2d');
+
+    new Chart(sourceCtx, {
+
+        type: 'bar',
+
+        data: {
+
+            labels: [
+                'CPGRAMS',
+                'BBMP',
+                'Survey',
+                'Twitter',
+                'Email'
+            ],
+
+            datasets: [{
+
+                label: 'Feedback',
+
+                data: [
+                    145000,
+                    28000,
+                    18000,
+                    9000,
+                    5168
+                ],
+
+                backgroundColor: '#2563eb',
+
+                borderRadius: 6,
+
+                barThickness: 24
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+
+            scales: {
+
+                y: {
+                    beginAtZero: true,
+
+                    grid: {
+                        color: '#edf0f5'
+                    },
+
+                    ticks: {
+                        color: '#7b8494'
+                    }
+                },
+
+                x: {
+
+                    grid: {
+                        display: false
+                    },
+
+                    ticks: {
+                        color: '#7b8494'
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+
+
+    // URGENCY CHART
+
+    const urgencyCtx =
+        document.getElementById('urgencyChart').getContext('2d');
+
+    new Chart(urgencyCtx, {
+
+        type: 'doughnut',
+
+        data: {
+
+            labels: [
+                'Critical',
+                'High',
+                'Medium',
+                'Low'
+            ],
+
+            datasets: [{
+
+                data: [
+                    1915,
+                    4895,
+                    6950,
+                    10757
+                ],
+
+                backgroundColor: [
+                    '#dc2626',
+                    '#f97316',
+                    '#f59e0b',
+                    '#22c55e'
+                ],
+
+                borderWidth: 0,
+
+                spacing: 3
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            cutout: '72%',
+
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+
+        }
+
+    });
+
+
+    // TREND CHART
+
+    const trendCtx =
+        document.getElementById('trendChart').getContext('2d');
+
+    new Chart(trendCtx, {
+
+        type: 'line',
+
+        data: {
+
+            labels: [
+                'Mon',
+                'Tue',
+                'Wed',
+                'Thu',
+                'Fri',
+                'Sat',
+                'Sun'
+            ],
+
+            datasets: [{
+
+                label: 'Feedback',
+
+                data: [
+                    24000,
+                    28500,
+                    26000,
+                    32000,
+                    35500,
+                    30000,
+                    39000
+                ],
+
+                borderColor: '#2563eb',
+
+                backgroundColor: 'rgba(37, 99, 235, 0.08)',
+
+                fill: true,
+
+                tension: 0.4,
+
+                pointRadius: 4,
+
+                pointBackgroundColor: '#2563eb'
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+
+            scales: {
+
+                y: {
+
+                    beginAtZero: false,
+
+                    grid: {
+                        color: '#edf0f5'
+                    },
+
+                    ticks: {
+                        color: '#7b8494'
+                    }
+
+                },
+
+                x: {
+
+                    grid: {
+                        display: false
+                    },
+
+                    ticks: {
+                        color: '#7b8494'
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+
+</script>
+
+</body>
+</html>
+```
