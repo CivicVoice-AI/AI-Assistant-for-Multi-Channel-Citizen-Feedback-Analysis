@@ -1,0 +1,137 @@
+# NLP Phase 3 — Exploratory NLP & Citizen Feedback Intelligence
+
+## Objective
+
+To extract useful NLP signals from the cleaned CIVICVOICE feedback dataset, including **sentiment, urgency and major topics/issues**.
+
+---
+
+## 1. Sentiment Analysis
+
+**Method:** VADER
+
+**Dataset:** 205,168 records
+
+### Results
+
+| Sentiment | Records | Percentage |
+|---|---:|---:|
+| Positive | 75,413 | 36.76% |
+| Neutral | 71,420 | 34.81% |
+| Negative | 58,335 | 28.43% |
+
+VADER was used as a **baseline exploratory model** because it is primarily English-oriented. Since CIVICVOICE contains multilingual feedback, a multilingual transformer can be evaluated in future work.
+
+---
+
+## 2. Urgency Analysis
+
+The existing `urgency` field was analyzed before building a classifier.
+
+- Total records: **205,168**
+- Labelled records: **24,517 (11.95%)**
+- Unlabelled records: **180,651 (88.05%)**
+
+Existing labels were available only from:
+
+- BBMP Bengaluru
+- Survey
+
+### Label distribution
+
+| Urgency | Records |
+|---|---:|
+| Low | 10,757 |
+| Medium | 6,950 |
+| High | 4,895 |
+| Critical | 1,915 |
+
+Missing urgency values were not fabricated.
+
+---
+
+## 3. Urgency Classification
+
+**Method:**
+
+```text
+TF-IDF + Logistic Regression
+```
+
+The 24,517 labelled records were divided into:
+
+- Training: **19,613**
+- Testing: **4,904**
+
+### Results
+
+| Metric | Score |
+|---|---:|
+| Accuracy | **54.65%** |
+| Macro F1 | **49.07%** |
+| Weighted F1 | **55.98%** |
+
+The model performed best for the **Low** urgency class (F1 = 0.76), while High and Medium were more difficult to distinguish.
+
+This model is treated as a **baseline**, not the final urgency model.
+
+---
+
+## 4. Topic / Issue Discovery
+
+**Method:**
+
+```text
+TF-IDF + NMF
+```
+
+A 50,000-record sample was used for practical processing.
+
+After text filtering:
+
+- Records used: **47,339**
+- TF-IDF features: **20,000**
+- Topics generated: **10**
+
+Some recurring themes included:
+
+- PF / UAN / employment
+- Complaints / representations
+- Income tax / refund / PAN
+- Travel / road-related terms
+
+Some topics contained administrative terminology and abbreviations because of the multilingual and government-oriented nature of the dataset.
+
+Therefore, NMF is treated as an **exploratory topic-discovery baseline**.
+
+---
+
+## Phase 3 Summary
+
+```text
+Cleaned Feedback
+       ↓
+Sentiment Analysis
+       ↓
+Urgency Analysis
+       ↓
+Urgency Classification
+       ↓
+Topic Discovery
+       ↓
+Citizen Feedback Intelligence
+```
+
+### Key Outcome
+
+Phase 3 established baseline NLP capabilities for CIVICVOICE:
+
+- **Sentiment** → identifies emotional polarity
+- **Urgency** → identifies priority level
+- **Topics** → identifies recurring issues
+
+These outputs can later be integrated with multilingual ML models, embeddings, RAG and an LLM-based assistant.
+
+## Conclusion
+
+NLP Phase 3 successfully converted the cleaned citizen-feedback dataset into useful exploratory intelligence using classical NLP techniques. The current models serve as baselines, while advanced multilingual models can be evaluated in later phases.
