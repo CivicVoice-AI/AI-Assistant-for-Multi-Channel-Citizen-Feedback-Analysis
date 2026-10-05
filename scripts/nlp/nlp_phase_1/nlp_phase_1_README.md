@@ -147,7 +147,3 @@ The single empty cleaned record was retained and documented rather than deleting
 ## 7. Phase 1 Conclusion
 
 Phase 1 converted the raw citizen-feedback text into a validated NLP-ready dataset while preserving the original information and multilingual content.
-
-### Review Explanation
-
-> In Phase 1, I first explored the text characteristics and identified multilingual content, noise and repeated administrative structures. I then applied conservative preprocessing such as Unicode normalization, HTML decoding, URL and email masking, punctuation normalization and whitespace cleanup. Finally, I validated the NLP dataset to make sure that the row count and feedback IDs were preserved.
