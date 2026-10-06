@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+import joblib
 
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -25,7 +26,19 @@ OUTPUT_DIR = Path(
     "datasets/processed/nlp/urgency_analysis"
 )
 
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+MODEL_DIR = Path(
+    "backend/models"
+)
+
+OUTPUT_DIR.mkdir(
+    parents=True,
+    exist_ok=True
+)
+
+MODEL_DIR.mkdir(
+    parents=True,
+    exist_ok=True
+)
 
 
 # ============================================================
@@ -168,14 +181,46 @@ print("\nModel training completed.")
 
 
 # ============================================================
+# SAVE MODEL + VECTORIZER
+# ============================================================
+
+print("\n" + "=" * 70)
+print("5. SAVING MODEL")
+print("=" * 70)
+
+model_file = MODEL_DIR / "urgency_model.pkl"
+vectorizer_file = MODEL_DIR / "urgency_vectorizer.pkl"
+
+joblib.dump(
+    model,
+    model_file
+)
+
+joblib.dump(
+    vectorizer,
+    vectorizer_file
+)
+
+print(
+    f"\nUrgency model saved to:\n{model_file}"
+)
+
+print(
+    f"\nTF-IDF vectorizer saved to:\n{vectorizer_file}"
+)
+
+
+# ============================================================
 # PREDICTION
 # ============================================================
 
 print("\n" + "=" * 70)
-print("5. MAKING PREDICTIONS")
+print("6. MAKING PREDICTIONS")
 print("=" * 70)
 
-y_pred = model.predict(X_test_tfidf)
+y_pred = model.predict(
+    X_test_tfidf
+)
 
 print("\nPredictions completed.")
 
@@ -185,7 +230,7 @@ print("\nPredictions completed.")
 # ============================================================
 
 print("\n" + "=" * 70)
-print("6. MODEL EVALUATION")
+print("7. MODEL EVALUATION")
 print("=" * 70)
 
 accuracy = accuracy_score(
@@ -205,9 +250,17 @@ weighted_f1 = f1_score(
     average="weighted"
 )
 
-print(f"\nAccuracy:    {accuracy:.4f}")
-print(f"Macro F1:    {macro_f1:.4f}")
-print(f"Weighted F1: {weighted_f1:.4f}")
+print(
+    f"\nAccuracy:    {accuracy:.4f}"
+)
+
+print(
+    f"Macro F1:    {macro_f1:.4f}"
+)
+
+print(
+    f"Weighted F1: {weighted_f1:.4f}"
+)
 
 
 # ============================================================
@@ -215,7 +268,7 @@ print(f"Weighted F1: {weighted_f1:.4f}")
 # ============================================================
 
 print("\n" + "=" * 70)
-print("7. CLASSIFICATION REPORT")
+print("8. CLASSIFICATION REPORT")
 print("=" * 70)
 
 print(
@@ -231,10 +284,12 @@ print(
 # ============================================================
 
 print("\n" + "=" * 70)
-print("8. CONFUSION MATRIX")
+print("9. CONFUSION MATRIX")
 print("=" * 70)
 
-classes = sorted(y.unique())
+classes = sorted(
+    y.unique()
+)
 
 cm = confusion_matrix(
     y_test,
@@ -244,12 +299,21 @@ cm = confusion_matrix(
 
 cm_df = pd.DataFrame(
     cm,
-    index=[f"Actual_{c}" for c in classes],
-    columns=[f"Predicted_{c}" for c in classes]
+    index=[
+        f"Actual_{c}"
+        for c in classes
+    ],
+    columns=[
+        f"Predicted_{c}"
+        for c in classes
+    ]
 )
 
 print("\n")
-print(cm_df)
+
+print(
+    cm_df.to_string()
+)
 
 
 # ============================================================
@@ -261,13 +325,13 @@ cm_file = (
     "urgency_confusion_matrix.csv"
 )
 
-cm_df.to_csv(cm_file)
-
-print(
-    f"\nConfusion matrix saved to:"
+cm_df.to_csv(
+    cm_file
 )
 
-print(cm_file)
+print(
+    f"\nConfusion matrix saved to:\n{cm_file}"
+)
 
 
 # ============================================================
@@ -291,10 +355,8 @@ prediction_df.to_csv(
 )
 
 print(
-    f"\nTest predictions saved to:"
+    f"\nTest predictions saved to:\n{prediction_file}"
 )
-
-print(prediction_file)
 
 
 # ============================================================
@@ -302,7 +364,7 @@ print(prediction_file)
 # ============================================================
 
 print("\n" + "=" * 70)
-print("9. FINAL VALIDATION")
+print("10. FINAL VALIDATION")
 print("=" * 70)
 
 print(
@@ -321,7 +383,21 @@ print(
     f"Testing records: {len(X_test):,}"
 )
 
-print("\nOriginal master dataset was NOT modified.")
+print(
+    "\nOriginal master dataset was NOT modified."
+)
+
+print(
+    "\nSaved reusable model files:"
+)
+
+print(
+    f"✓ {model_file}"
+)
+
+print(
+    f"✓ {vectorizer_file}"
+)
 
 print("\n" + "=" * 70)
 print("URGENCY CLASSIFICATION COMPLETE")

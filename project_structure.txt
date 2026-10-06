@@ -1,0 +1,125 @@
+Folder PATH listing for volume Acer
+Volume serial number is 7403-A8E2
+C:.
+|   .gitignore
+|   LICENSE
+|   project_structure.txt
+|   README.md
+|   
++---backend
++---database
++---datasets
+|   |   README.md
+|   |   
+|   +---masterd
+|   |       master_feedback.csv
+|   |       
+|   +---processed
+|   |   |   cpgrams_clean.csv
+|   |   |   email_clean.csv
+|   |   |   local_complaints_bengaluru_clean.csv
+|   |   |   survey_clean.csv
+|   |   |   twitter_clean
+|   |   |   twitter_clean.csv
+|   |   |   
+|   |   \---nlp
+|   |       |   master_feedback_nlp.csv
+|   |       |   README.md
+|   |       |   
+|   |       +---topic_analysis
+|   |       |       topic_assignments.csv
+|   |       |       topic_assignments_v2.csv
+|   |       |       topic_distribution.csv
+|   |       |       topic_distribution_v2.csv
+|   |       |       topic_words.csv
+|   |       |       topic_words_v2.csv
+|   |       |       
+|   |       \---urgency_analysis
+|   |               labelled_urgency_distribution.csv
+|   |               overall_urgency_distribution.csv
+|   |               source_label_availability.csv
+|   |               source_urgency_distribution.csv
+|   |               urgency_confusion_matrix.csv
+|   |               urgency_test_predictions.csv
+|   |               
+|   \---raw
+|       +---cpgrams
+|       |       CategoryCode_Mapping.xlsx
+|       |       
+|       +---email
+|       |       email_raw_dataset.csv
+|       |       
+|       +---facebook
+|       +---local_complaints
+|       |       local_complaints_bengaluru.csv
+|       |       
+|       +---survey
+|       |       survey_synthetic_raw.csv
+|       |       
+|       \---twitter
+|               Complaints_Reports_Data.sql
+|               
++---frontend
+|       index.html
+|       style.css
+|       
++---presentations
+|       Mini project_review-1 (2).pdf
+|       Mini project_review-2.pdf
+|       Mini project_review-3.pdf
+|       
+\---scripts
+    +---cpgrams
+    |       cpgrams_README.md
+    |       normalize_cpgrams.py
+    |       
+    +---email
+    |       normalize_email.py
+    |       
+    +---local_complaints
+    |       analyze_raw_duplicates.py
+    |       local_complaints_README.md
+    |       normalize_local_complaints.py
+    |       
+    +---master_Dataset
+    |       analyze_duplicates.py
+    |       master_data_README.md
+    |       merge_feedback.py
+    |       validate_master.py
+    |       
+    +---nlp
+    |   +---nlp_phase_1
+    |   |       analyze_boilerplate.py
+    |   |       analyze_language.py
+    |   |       analyze_noise.py
+    |   |       explore_text.py
+    |   |       nlp_phase_1_README.md
+    |   |       preprocess_text.py
+    |   |       validate_nlp_dataset.py
+    |   |       
+    |   +---nlp_phase_2
+    |   |       analyze_ngrams.py
+    |   |       analyze_ngrams_README.md
+    |   |       analyze_term_frequency.py
+    |   |       analyze_term_frequency_README.md
+    |   |       analyze_tfidf.py
+    |   |       analyze_tfidf.README.md
+    |   |       analyze_tokens.py
+    |   |       nlp_phase2_README.md
+    |   |       
+    |   \---nlp_phase_3
+    |           analyse_topics_README.md
+    |           analyse_urgency_README.md
+    |           analyze_sentiment.py
+    |           analyze_sentiment_README.md
+    |           analyze_topics.py
+    |           analyze_topics_v2.py
+    |           analyze_urgency.py
+    |           README.md
+    |           train_urgency_model.py
+    |           train_urgency_README.md
+    |           
+    \---survey
+            normalize_survey.py
+            survey_README.md
+            
