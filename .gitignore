@@ -223,3 +223,7 @@ datasets/raw/local_complaints/local_complaints_bengaluru.csv
 datasets/processed/local_complaints_bengaluru_clean.csv
 datasets/masterd/master_feedback.csv
 datasets/processed/nlp/master_feedback_nlp.csv
+datasets/processed/nlp/transformer_evaluation/vader_vs_transformer.csv
+datasets/processed/nlp/topic_analysis/topic_assignments_v2.csv
+datasets/processed/nlp/topic_analysis/topic_assignments_v3.csv
+datasets/processed/nlp/topic_analysis/topic_assignments.csv

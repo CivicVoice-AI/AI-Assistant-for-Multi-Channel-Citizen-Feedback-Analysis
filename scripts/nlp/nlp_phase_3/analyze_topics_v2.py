@@ -1,32 +1,18 @@
-import pandas as pd
+import os
 import re
+import pandas as pd
+import numpy as np
 
-from pathlib import Path
-
-from sklearn.feature_extraction.text import (
-    TfidfVectorizer,
-    ENGLISH_STOP_WORDS
-)
-
+from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 from sklearn.decomposition import NMF
 
 
 # ============================================================
-# CONFIGURATION
+# CiviVoice — NLP Phase 3: Improved Topic Analysis
 # ============================================================
 
-INPUT_FILE = Path(
-    "datasets/processed/nlp/master_feedback_nlp.csv"
-)
-
-OUTPUT_DIR = Path(
-    "datasets/processed/nlp/topic_analysis"
-)
-
-OUTPUT_DIR.mkdir(
-    parents=True,
-    exist_ok=True
-)
+INPUT_FILE = r"datasets\processed\nlp\master_feedback_nlp.csv"
+OUTPUT_DIR = r"datasets\processed\nlp\topic_analysis"
 
 N_TOPICS = 10
 TOP_WORDS = 15
@@ -35,397 +21,447 @@ RANDOM_STATE = 42
 
 
 # ============================================================
-# LOAD DATA
+# 1. LOAD DATA
 # ============================================================
 
 print("=" * 70)
-print("CIVICVOICE - IMPROVED TOPIC / ISSUE DISCOVERY")
+print("CiviVoice — NLP Phase 3: Improved Topic Analysis")
 print("=" * 70)
 
-print("\nLoading dataset...")
+print("\nLoading master dataset...")
 
-df = pd.read_csv(
-    INPUT_FILE,
-    low_memory=False
-)
+df = pd.read_csv(INPUT_FILE)
 
-print(
-    f"Dataset shape: {df.shape}"
-)
+print(f"Dataset shape: {df.shape}")
 
+df = df[df["text"].notna()].copy()
+df["text"] = df["text"].astype(str)
 
-# ============================================================
-# CHECK TEXT COLUMN
-# ============================================================
-
-if "text_clean" not in df.columns:
-
-    print(
-        "\nERROR: text_clean column not found."
-    )
-
-    raise SystemExit(1)
+print(f"Records with non-empty text: {len(df):,}")
 
 
 # ============================================================
-# CLEAN EMPTY TEXT
+# 2. TOPIC-SPECIFIC CLEANING
 # ============================================================
 
-df["text_clean"] = (
-    df["text_clean"]
-    .fillna("")
-    .astype(str)
-    .str.strip()
-)
+# These are structural / administrative words identified from
+# the Phase 1 boilerplate analysis.
+BOILERPLATE_TERMS = {
+    "provided",
+    "office",
+    "account",
+    "number",
+    "certificate",
+    "scheme",
+    "department",
+    "ministry",
+    "reference",
+    "subject",
+    "application",
+    "name",
+    "address",
+    "bank",
+    "branch",
+    "ppo",
+    "uan",
+    "pf",
+    "gist",
+    "pmo",
+    "copy",
+    "sent",
+    "kindly",
+    "government",
+    "state",
+    "central",
+    "related",
+    "others",
+    "other",
+    "details",
+    "mentioned",
+    "received",
+    "attached",
+    "attachment",
+    "view",
+    "scanned",
+    "sub",
+    "sir",
+    "madam",
+    "dear",
+    "please",
+    "regarding",
+    "matter",
+    "action",
+}
 
-df = df[
-    df["text_clean"] != ""
-].copy()
+# Common structural CPGRAMS phrases.
+BOILERPLATE_PHRASES = [
+    r"government\s+kindly",
+    r"state\s+government",
+    r"central\s+government",
+    r"government\s+related",
+    r"department\s+related",
+    r"office\s+related",
+    r"pmo\s+follows",
+    r"send\s+pmo",
+    r"copy\s+sent",
+    r"view\s+scanned",
+    r"gist\s+of",
+    r"gist",
+    r"as\s+per\s+attachment",
+    r"as\s+per\s+attatchment",
+    r"grievance\s+attached",
+    r"call\s+disconnected",
+    r"disconnect\s+call",
+]
 
-print(
-    f"\nRecords with non-empty text: "
-    f"{len(df):,}"
-)
-
-
-# ============================================================
-# SAMPLE DATA
-# ============================================================
-
-print("\n" + "=" * 70)
-print("1. SELECTING DATA")
-print("=" * 70)
-
-if len(df) > SAMPLE_SIZE:
-
-    topic_df = df.sample(
-        n=SAMPLE_SIZE,
-        random_state=RANDOM_STATE
-    ).copy()
-
-else:
-
-    topic_df = df.copy()
-
-print(
-    f"\nRecords used: "
-    f"{len(topic_df):,}"
-)
-
-
-# ============================================================
-# CUSTOM TOKEN FILTER
-# ============================================================
-
-print("\n" + "=" * 70)
-print("2. TEXT FILTERING")
-print("=" * 70)
-
-
-# Convert stopword set to a normal Python set
-stop_words = set(ENGLISH_STOP_WORDS)
+# English stopwords + topic-specific administrative words.
+STOP_WORDS = set(ENGLISH_STOP_WORDS)
+STOP_WORDS.update(BOILERPLATE_TERMS)
 
 
 def clean_for_topics(text):
+    """
+    Topic-specific cleaning.
 
-    # Convert to lowercase
-    text = text.lower()
+    IMPORTANT:
+    This does NOT modify the original master dataset.
+    It only creates cleaned text for topic modelling.
+    """
 
-    # Keep English/Hindi Unicode letters and numbers
-    tokens = re.findall(
-        r"[^\W\d_]+",
+    text = str(text)
+
+    # --------------------------------------------------------
+    # Remove HTML entities
+    # --------------------------------------------------------
+    text = re.sub(r"&[a-zA-Z]+;", " ", text)
+    text = re.sub(r"&#\d+;", " ", text)
+    text = re.sub(r"&#x[0-9a-fA-F]+;", " ", text)
+
+    # --------------------------------------------------------
+    # Remove URLs
+    # --------------------------------------------------------
+    text = re.sub(r"https?://\S+|www\.\S+", " ", text)
+
+    # --------------------------------------------------------
+    # Remove email addresses
+    # --------------------------------------------------------
+    text = re.sub(
+        r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b",
+        " ",
         text,
-        flags=re.UNICODE
     )
+
+    # --------------------------------------------------------
+    # Remove @mentions
+    # --------------------------------------------------------
+    text = re.sub(r"@\w+", " ", text)
+
+    # --------------------------------------------------------
+    # Remove hashtags symbol but KEEP the actual word
+    # --------------------------------------------------------
+    text = re.sub(r"#(\w+)", r"\1", text)
+
+    # --------------------------------------------------------
+    # Remove long separators / CPGRAMS formatting
+    # Examples:
+    # -----------------------
+    # X-X-X-X-X
+    # >>>>
+    # --------------------------------------------------------
+    text = re.sub(r"[-_=]{3,}", " ", text)
+    text = re.sub(r"(?:X[-X]*){3,}", " ", text)
+    text = re.sub(r"[>|]{2,}", " ", text)
+
+    # --------------------------------------------------------
+    # Remove known structural phrases
+    # --------------------------------------------------------
+    text_lower = text.lower()
+
+    for pattern in BOILERPLATE_PHRASES:
+        text_lower = re.sub(pattern, " ", text_lower)
+
+    text = text_lower
+
+    # --------------------------------------------------------
+    # Remove CPGRAMS-style short codes
+    # Examples:
+    # PG/SAT
+    # PG/BA
+    # PG/MD
+    # PG/RJ
+    # STS
+    # FRANK
+    # TV
+    # SUB
+    # --------------------------------------------------------
+    text = re.sub(r"\bpg/[a-z]{2,10}\b", " ", text)
+    text = re.sub(r"\b(?:sts|frank|tv|sub)\b", " ", text)
+
+    # --------------------------------------------------------
+    # Remove standalone field labels
+    # --------------------------------------------------------
+    field_patterns = [
+        r"\bname\s+and\s+address\b",
+        r"\bdate\s+of\s+application\b",
+        r"\bname\s+of\s+department\b",
+        r"\bname\s+of\s+bank\b",
+        r"\bpf\s+office\b",
+        r"\bscheme\s+certificate\s+number\b",
+        r"\bpension\s+payment\s+order\b",
+        r"\baccount\s+number\b",
+        r"\buan\s+no\b",
+        r"\bppo\s+no\b",
+    ]
+
+    for pattern in field_patterns:
+        text = re.sub(pattern, " ", text)
+
+    # --------------------------------------------------------
+    # Remove excessive punctuation
+    # --------------------------------------------------------
+    text = re.sub(r"[^\w\s]", " ", text, flags=re.UNICODE)
+
+    # --------------------------------------------------------
+    # Tokenize while preserving Unicode characters
+    # This allows Hindi and other Indian-language text to remain.
+    # --------------------------------------------------------
+    tokens = re.findall(r"\b\w+\b", text, flags=re.UNICODE)
 
     cleaned_tokens = []
 
     for token in tokens:
 
+        token_lower = token.lower()
+
+        # Remove English stopwords / administrative boilerplate
+        if token_lower in STOP_WORDS:
+            continue
+
         # Remove very short tokens
-        if len(token) < 3:
+        if len(token_lower) < 3:
             continue
 
-        # Remove English stopwords
-        if token in stop_words:
+        # Remove tokens consisting only of digits
+        if token_lower.isdigit():
             continue
 
-        cleaned_tokens.append(token)
+        cleaned_tokens.append(token_lower)
 
     return " ".join(cleaned_tokens)
 
 
-topic_df["topic_text"] = (
-    topic_df["text_clean"]
-    .apply(clean_for_topics)
-)
+print("\nCleaning text for topic modelling...")
 
+df["topic_text"] = df["text"].apply(clean_for_topics)
 
-# Remove empty results
-topic_df = topic_df[
-    topic_df["topic_text"].str.strip() != ""
-].copy()
+# Remove rows that became empty
+df = df[df["topic_text"].str.strip().ne("")].copy()
 
-
-print(
-    f"\nRecords after filtering: "
-    f"{len(topic_df):,}"
-)
+print(f"Records remaining after topic cleaning: {len(df):,}")
 
 
 # ============================================================
-# TF-IDF
+# 3. SAMPLE DATA
 # ============================================================
 
-print("\n" + "=" * 70)
-print("3. TF-IDF FEATURE EXTRACTION")
-print("=" * 70)
+if len(df) > SAMPLE_SIZE:
+    topic_df = df.sample(
+        n=SAMPLE_SIZE,
+        random_state=RANDOM_STATE
+    ).copy()
+else:
+    topic_df = df.copy()
+
+print(f"Records used for topic modelling: {len(topic_df):,}")
+
+
+# ============================================================
+# 4. TF-IDF
+# ============================================================
+
+print("\nCreating TF-IDF matrix...")
 
 vectorizer = TfidfVectorizer(
     max_features=20000,
     ngram_range=(1, 2),
     min_df=5,
-    max_df=0.90,
-    sublinear_tf=True
+    max_df=0.85,
+    sublinear_tf=True,
 )
 
-tfidf_matrix = vectorizer.fit_transform(
-    topic_df["topic_text"]
-)
+tfidf_matrix = vectorizer.fit_transform(topic_df["topic_text"])
 
-print(
-    f"\nTF-IDF matrix shape: "
-    f"{tfidf_matrix.shape}"
-)
-
-print(
-    f"Number of non-zero values: "
-    f"{tfidf_matrix.nnz:,}"
-)
+print(f"TF-IDF shape: {tfidf_matrix.shape}")
 
 
 # ============================================================
-# NMF
+# 5. NMF TOPIC MODEL
 # ============================================================
 
-print("\n" + "=" * 70)
-print("4. NMF TOPIC MODELING")
-print("=" * 70)
+print("\nRunning NMF topic model...")
 
-print(
-    f"\nNumber of topics: "
-    f"{N_TOPICS}"
-)
-
-nmf_model = NMF(
+nmf = NMF(
     n_components=N_TOPICS,
-    init="nndsvda",
     random_state=RANDOM_STATE,
-    max_iter=300
+    init="nndsvda",
+    max_iter=400,
 )
 
-topic_matrix = nmf_model.fit_transform(
-    tfidf_matrix
-)
+topic_matrix = nmf.fit_transform(tfidf_matrix)
 
-print(
-    "\nNMF topic modeling completed."
-)
-
-print(
-    f"Topic matrix shape: "
-    f"{topic_matrix.shape}"
-)
+print(f"Topic matrix shape: {topic_matrix.shape}")
 
 
 # ============================================================
-# TOP WORDS
+# 6. TOP WORDS PER TOPIC
 # ============================================================
 
-print("\n" + "=" * 70)
-print("5. TOP WORDS FOR EACH TOPIC")
-print("=" * 70)
+feature_names = vectorizer.get_feature_names_out()
 
-feature_names = (
-    vectorizer.get_feature_names_out()
-)
+topic_rows = []
 
-topic_results = []
+for topic_idx, topic in enumerate(nmf.components_):
 
-for topic_index, topic in enumerate(
-    nmf_model.components_
-):
+    top_indices = topic.argsort()[-TOP_WORDS:][::-1]
 
-    top_indices = topic.argsort()[
-        -TOP_WORDS:
-    ][::-1]
-
-    top_words = [
+    words = [
         feature_names[i]
         for i in top_indices
     ]
 
-    topic_results.append({
-        "Topic": f"Topic_{topic_index + 1}",
-        "Top_Words": ", ".join(top_words)
+    scores = [
+        float(topic[i])
+        for i in top_indices
+    ]
+
+    topic_rows.append({
+        "topic": topic_idx + 1,
+        "top_words": ", ".join(words),
+        "top_word_scores": ", ".join(
+            f"{score:.4f}" for score in scores
+        ),
     })
 
-    print(
-        f"\nTopic {topic_index + 1}:"
-    )
-
-    print(
-        ", ".join(top_words)
-    )
+topic_words_df = pd.DataFrame(topic_rows)
 
 
 # ============================================================
-# SAVE TOPIC WORDS
+# 7. ASSIGN TOPIC TO EACH RECORD
 # ============================================================
 
-topic_words_df = pd.DataFrame(
-    topic_results
-)
+topic_assignments = topic_matrix.argmax(axis=1) + 1
+topic_scores = topic_matrix.max(axis=1)
 
-topic_words_file = (
-    OUTPUT_DIR /
-    "topic_words_v2.csv"
-)
-
-topic_words_df.to_csv(
-    topic_words_file,
-    index=False
-)
-
-print(
-    f"\nTopic words saved to:"
-)
-
-print(topic_words_file)
+topic_df["topic"] = topic_assignments
+topic_df["topic_score"] = topic_scores
 
 
 # ============================================================
-# DOMINANT TOPIC
+# 8. TOPIC DISTRIBUTION
 # ============================================================
 
-print("\n" + "=" * 70)
-print("6. DOMINANT TOPIC DISTRIBUTION")
-print("=" * 70)
-
-dominant_topics = (
-    topic_matrix.argmax(axis=1)
-)
-
-topic_df["dominant_topic"] = (
-    dominant_topics + 1
-)
-
-topic_distribution = (
-    topic_df["dominant_topic"]
+topic_counts = (
+    topic_df["topic"]
     .value_counts()
     .sort_index()
 )
 
 topic_distribution_df = pd.DataFrame({
-    "Topic": topic_distribution.index,
-    "Records": topic_distribution.values,
-    "Percentage": (
-        topic_distribution.values /
-        len(topic_df) * 100
-    ).round(2)
+    "topic": topic_counts.index,
+    "record_count": topic_counts.values,
 })
 
-print("\n")
-
-print(
-    topic_distribution_df.to_string(
-        index=False
-    )
+topic_distribution_df["percentage"] = (
+    topic_distribution_df["record_count"]
+    / len(topic_df)
+    * 100
 )
 
 
 # ============================================================
-# SAVE DISTRIBUTION
+# 9. SAVE RESULTS
 # ============================================================
 
-distribution_file = (
-    OUTPUT_DIR /
-    "topic_distribution_v2.csv"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+topic_words_path = os.path.join(
+    OUTPUT_DIR,
+    "topic_words_v3.csv"
+)
+
+topic_distribution_path = os.path.join(
+    OUTPUT_DIR,
+    "topic_distribution_v3.csv"
+)
+
+topic_assignments_path = os.path.join(
+    OUTPUT_DIR,
+    "topic_assignments_v3.csv"
+)
+
+topic_words_df.to_csv(
+    topic_words_path,
+    index=False,
+    encoding="utf-8-sig"
 )
 
 topic_distribution_df.to_csv(
-    distribution_file,
-    index=False
+    topic_distribution_path,
+    index=False,
+    encoding="utf-8-sig"
 )
 
-print(
-    f"\nTopic distribution saved to:"
-)
-
-print(distribution_file)
-
-
-# ============================================================
-# SAVE TOPIC ASSIGNMENTS
-# ============================================================
-
-assignment_df = topic_df[
+topic_df[
     [
+        "feedback_id",
         "source",
-        "text_clean",
-        "dominant_topic"
+        "timestamp",
+        "text",
+        "topic_text",
+        "topic",
+        "topic_score",
     ]
-].copy()
-
-assignment_file = (
-    OUTPUT_DIR /
-    "topic_assignments_v2.csv"
+].to_csv(
+    topic_assignments_path,
+    index=False,
+    encoding="utf-8-sig"
 )
-
-assignment_df.to_csv(
-    assignment_file,
-    index=False
-)
-
-print(
-    f"\nTopic assignments saved to:"
-)
-
-print(assignment_file)
 
 
 # ============================================================
-# VALIDATION
+# 10. PRINT RESULTS
 # ============================================================
 
 print("\n" + "=" * 70)
-print("7. VALIDATION")
+print("TOP WORDS PER TOPIC")
 print("=" * 70)
 
-print(
-    f"\nOriginal dataset rows: "
-    f"{len(df):,}"
-)
+for _, row in topic_words_df.iterrows():
 
-print(
-    f"Records used for topic modeling: "
-    f"{len(topic_df):,}"
-)
+    print(f"\nTopic {int(row['topic'])}:")
+    print(row["top_words"])
 
-print(
-    f"Number of topics: "
-    f"{N_TOPICS}"
-)
-
-print(
-    f"Top words per topic: "
-    f"{TOP_WORDS}"
-)
-
-print(
-    "\nOriginal master dataset was NOT modified."
-)
 
 print("\n" + "=" * 70)
-print("IMPROVED TOPIC DISCOVERY COMPLETE")
+print("TOPIC DISTRIBUTION")
 print("=" * 70)
+
+for _, row in topic_distribution_df.iterrows():
+
+    print(
+        f"Topic {int(row['topic'])}: "
+        f"{int(row['record_count']):,} "
+        f"({row['percentage']:.2f}%)"
+    )
+
+
+print("\n" + "=" * 70)
+print("FILES SAVED")
+print("=" * 70)
+
+print(topic_words_path)
+print(topic_distribution_path)
+print(topic_assignments_path)
+
+print("\nTopic analysis complete.")
+print("Original master dataset was NOT modified.")
