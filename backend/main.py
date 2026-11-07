@@ -24,6 +24,7 @@ app.add_middleware(
         "http://127.0.0.1:5500",
         "http://localhost:5500",
         "https://whimsical-jelly-a49219.netlify.app",
+        "https://civicvoicee.netlify.app",
     ],
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
