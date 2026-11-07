@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -523,92 +522,102 @@
 
         <!-- ================= NLP PREVIEW ================= -->
 
-        <section class="nlp-preview" id="nlp">
+<!-- ================= NLP INSIGHTS ================= -->
 
-            <div class="section-heading">
+<section class="nlp-preview" id="nlp">
 
-                <div>
-                    <p class="eyebrow">NLP PIPELINE</p>
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">NLP PIPELINE</p>
+            <h2>AI & NLP Insights</h2>
+            <p>
+                Analyze citizen feedback using the existing
+                sentiment analysis and urgency prediction model.
+            </p>
+        </div>
+    </div>
 
-                    <h2>AI & NLP Insights</h2>
+    <div style="margin: 20px 0;">
+        <label for="nlpFeedbackInput">
+            Enter citizen feedback
+        </label>
 
-                    <p>
-                        Preview of the intelligence layer being integrated
-                        into CIVIVOICE.
-                    </p>
-                </div>
+        <textarea
+            id="nlpFeedbackInput"
+            placeholder="Example: The roads are damaged and need urgent repair."
+            rows="4"
+            style="width: 100%; padding: 14px; margin-top: 8px;
+                   border: 1px solid #dbe1ea; border-radius: 10px;
+                   font: inherit; resize: vertical;"
+        ></textarea>
 
+        <button
+            id="analyzeFeedbackButton"
+            type="button"
+            style="margin-top: 12px; padding: 12px 20px;
+                   border: none; border-radius: 8px;
+                   background: #2563eb; color: white;
+                   cursor: pointer;"
+        >
+            <i class="fa-solid fa-brain"></i>
+            Analyze Feedback
+        </button>
+
+        <p
+            id="nlpStatus"
+            role="status"
+            style="margin-top: 10px;"
+        ></p>
+    </div>
+
+    <div class="nlp-grid">
+
+        <div class="nlp-card">
+            <div class="nlp-icon">
+                <i class="fa-solid fa-face-smile"></i>
             </div>
-
-
-            <div class="nlp-grid">
-
-                <div class="nlp-card">
-
-                    <div class="nlp-icon">
-                        <i class="fa-solid fa-face-frown"></i>
-                    </div>
-
-                    <div>
-                        <span>Sentiment Analysis</span>
-                        <strong>Negative</strong>
-                    </div>
-
-                    <small>Prototype</small>
-
-                </div>
-
-
-                <div class="nlp-card">
-
-                    <div class="nlp-icon">
-                        <i class="fa-solid fa-tags"></i>
-                    </div>
-
-                    <div>
-                        <span>Issue Category</span>
-                        <strong>Water Supply</strong>
-                    </div>
-
-                    <small>Prototype</small>
-
-                </div>
-
-
-                <div class="nlp-card">
-
-                    <div class="nlp-icon">
-                        <i class="fa-solid fa-brain"></i>
-                    </div>
-
-                    <div>
-                        <span>Topic Detection</span>
-                        <strong>Infrastructure</strong>
-                    </div>
-
-                    <small>Prototype</small>
-
-                </div>
-
-
-                <div class="nlp-card">
-
-                    <div class="nlp-icon">
-                        <i class="fa-solid fa-bolt"></i>
-                    </div>
-
-                    <div>
-                        <span>Urgency Detection</span>
-                        <strong>High</strong>
-                    </div>
-
-                    <small>Prototype</small>
-
-                </div>
-
+            <div>
+                <span>Sentiment Analysis</span>
+                <strong id="nlpSentiment">Awaiting analysis</strong>
             </div>
+            <small>Live model</small>
+        </div>
 
-        </section>
+        <div class="nlp-card">
+            <div class="nlp-icon">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div>
+                <span>Positive Score</span>
+                <strong id="nlpPositive">—</strong>
+            </div>
+            <small>VADER</small>
+        </div>
+
+        <div class="nlp-card">
+            <div class="nlp-icon">
+                <i class="fa-solid fa-chart-column"></i>
+            </div>
+            <div>
+                <span>Negative Score</span>
+                <strong id="nlpNegative">—</strong>
+            </div>
+            <small>VADER</small>
+        </div>
+
+        <div class="nlp-card">
+            <div class="nlp-icon">
+                <i class="fa-solid fa-bolt"></i>
+            </div>
+            <div>
+                <span>Urgency Detection</span>
+                <strong id="nlpUrgency">Awaiting analysis</strong>
+            </div>
+            <small>Existing model</small>
+        </div>
+
+    </div>
+</section>
 
 
         <!-- FOOTER -->
@@ -878,9 +887,265 @@
         }
 
     });
+const CIVICVOICE_API = "http://127.0.0.1:8000";
+
+async function loadCivicVoiceFeedback() {
+    // Initial load and dropdown changes use the same rendering function.
+    return applyDashboardFilters();
+}
+
+// ==========================================
+// CIVICVOICE DASHBOARD FILTERS
+// ==========================================
+
+const filterPanel = document.querySelector(".filter-panel");
+const filterSelects = filterPanel.querySelectorAll("select");
+
+const sourceFilter = filterSelects[0];
+const urgencyFilter = filterSelects[1];
+const locationFilter = filterSelects[2];
+
+const resetButton = document.querySelector(".reset-button");
+
+async function applyDashboardFilters() {
+    const table = document.querySelector(".feedback-table");
+
+    if (!table || !sourceFilter || !urgencyFilter || !locationFilter) {
+        console.error("CIVICVOICE: Feedback table or filters not found.");
+        return;
+    }
+
+    table.querySelectorAll(
+        ".feedback-row, .filter-result-message, .api-feedback-error"
+    ).forEach(element => element.remove());
+
+    const params = new URLSearchParams();
+    params.set("limit", "100");
+
+    if (sourceFilter.value && sourceFilter.value !== "All Sources") {
+        params.set("source", sourceFilter.value);
+    }
+
+    if (urgencyFilter.value && urgencyFilter.value !== "All Levels") {
+        params.set("urgency", urgencyFilter.value);
+    }
+
+    if (
+        locationFilter.value &&
+        locationFilter.value !== "All Locations" &&
+        locationFilter.value !== "Other" &&
+        locationFilter.value !== "Unknown"
+    ) {
+        params.set("location", locationFilter.value);
+    }
+
+    try {
+        const response = await fetch(
+            `${CIVICVOICE_API}/feedback?${params.toString()}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API returned HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!Array.isArray(result.items)) {
+            throw new Error("Unexpected feedback response format.");
+        }
+
+        if (locationFilter.value === "Other" || locationFilter.value === "Unknown") {
+            const message = document.createElement("p");
+            message.className = "filter-result-message";
+            message.textContent =
+                `"${locationFilter.value}" filtering needs backend support. ` +
+                "Choose All Locations or Bengaluru for now.";
+            message.style.padding = "20px";
+            message.setAttribute("role", "status");
+            table.appendChild(message);
+            return;
+        }
+
+        if (result.items.length === 0) {
+            const message = document.createElement("p");
+            message.className = "filter-result-message";
+            message.textContent = "No feedback matches these filters.";
+            message.style.padding = "20px";
+            message.setAttribute("role", "status");
+            table.appendChild(message);
+            return;
+        }
+
+        result.items.forEach(item => {
+            const row = document.createElement("div");
+            row.className = "feedback-row";
+
+            const content = document.createElement("div");
+            content.className = "feedback-content";
+
+            const title = document.createElement("strong");
+            title.textContent = item.organization || "Citizen Feedback";
+
+            const description = document.createElement("p");
+            description.textContent = item.feedback_text || "";
+            content.append(title, description);
+
+            const source = document.createElement("span");
+            source.className = "source-badge";
+            source.textContent = item.source || "Unknown";
+
+            const location = document.createElement("span");
+            location.textContent = item.location || "Unknown";
+
+            const urgency = document.createElement("span");
+            urgency.className = "urgency-badge";
+            const label = String(item.urgency || "Unknown").toLowerCase();
+
+            if (label === "critical") {
+                urgency.classList.add("critical-badge");
+            } else if (label === "high") {
+                urgency.classList.add("high-badge");
+            } else if (label === "medium") {
+                urgency.classList.add("medium-badge");
+            } else if (label === "low") {
+                urgency.classList.add("low-badge");
+            }
+            urgency.textContent = item.urgency || "Unknown";
+
+            const viewButton = document.createElement("button");
+            viewButton.className = "view-button";
+            viewButton.type = "button";
+            viewButton.textContent = "View";
+            viewButton.addEventListener("click", () => {
+                alert(
+                    `Feedback ID: ${item.feedback_id}\n\n` +
+                    `Feedback: ${item.feedback_text || ""}\n\n` +
+                    `Source: ${item.source || "Unknown"}\n` +
+                    `Location: ${item.location || "Unknown"}\n` +
+                    `Organization: ${item.organization || "Unknown"}\n` +
+                    `Urgency: ${item.urgency || "Unknown"}`
+                );
+            });
+
+            row.append(content, source, location, urgency, viewButton);
+            table.appendChild(row);
+        });
+
+        console.log(
+            `CIVICVOICE: Loaded ${result.items.length} records. ` +
+            `Source=${sourceFilter.value}; Urgency=${urgencyFilter.value}; ` +
+            `Location=${locationFilter.value}`
+        );
+    } catch (error) {
+        console.error("Dashboard filtering failed:", error);
+        const message = document.createElement("p");
+        message.className = "api-feedback-error";
+        message.textContent =
+            "Unable to load feedback. Please check the backend connection.";
+        message.style.padding = "16px";
+        message.setAttribute("role", "status");
+        table.appendChild(message);
+    }
+}
+
+// Apply filters whenever a dropdown changes.
+sourceFilter.addEventListener("change", applyDashboardFilters);
+urgencyFilter.addEventListener("change", applyDashboardFilters);
+locationFilter.addEventListener("change", applyDashboardFilters);
+
+// Reset all filters.
+resetButton.addEventListener("click", () => {
+    sourceFilter.selectedIndex = 0;
+    urgencyFilter.selectedIndex = 0;
+    locationFilter.selectedIndex = 0;
+
+    applyDashboardFilters();
+});
+
+// "View all" resets filters and loads the available records.
+const viewAllButton = document.querySelector(".view-all");
+if (viewAllButton) {
+    viewAllButton.addEventListener("click", () => {
+        sourceFilter.selectedIndex = 0;
+        urgencyFilter.selectedIndex = 0;
+        locationFilter.selectedIndex = 0;
+        applyDashboardFilters();
+    });
+}
+
+// Load the initial records.
+loadCivicVoiceFeedback();
+// ==========================================
+// CIVICVOICE LIVE NLP ANALYSIS
+// ==========================================
+
+const analyzeButton = document.getElementById("analyzeFeedbackButton");
+
+analyzeButton.addEventListener("click", async () => {
+    const input = document.getElementById("nlpFeedbackInput");
+    const status = document.getElementById("nlpStatus");
+    const text = input.value.trim();
+
+    if (!text) {
+        status.textContent = "Please enter feedback to analyze.";
+        input.focus();
+        return;
+    }
+
+    analyzeButton.disabled = true;
+    status.textContent = "Analyzing feedback...";
+
+    try {
+        const response = await fetch(
+            `${CIVICVOICE_API}/analyze`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    text: text
+                })
+            }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                result.detail || `Request failed: ${response.status}`
+            );
+        }
+
+        document.getElementById("nlpSentiment").textContent =
+            result.sentiment || "Unavailable";
+
+        document.getElementById("nlpPositive").textContent =
+            result.sentiment_positive !== undefined
+                ? Number(result.sentiment_positive).toFixed(3)
+                : "—";
+
+        document.getElementById("nlpNegative").textContent =
+            result.sentiment_negative !== undefined
+                ? Number(result.sentiment_negative).toFixed(3)
+                : "—";
+
+        document.getElementById("nlpUrgency").textContent =
+            result.urgency || "Unavailable";
+
+        status.textContent = "Analysis completed successfully.";
+
+    } catch (error) {
+        console.error("NLP analysis failed:", error);
+        status.textContent =
+            "Analysis failed. Check that the backend is running.";
+    } finally {
+        analyzeButton.disabled = false;
+    }
+});
+
 
 </script>
 
 </body>
 </html>
-```

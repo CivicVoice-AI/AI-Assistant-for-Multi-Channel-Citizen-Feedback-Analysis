@@ -117,8 +117,8 @@ def analyze_sentiment(text: str) -> dict:
 
 def predict_urgency(text: str) -> str:
     """
-    Predict urgency using the trained
-    TF-IDF + Logistic Regression model.
+    Predict urgency using critical complaint rules first,
+    then fall back to the existing trained ML model.
     """
 
     cleaned_text = clean_text(text)
@@ -126,6 +126,48 @@ def predict_urgency(text: str) -> str:
     if not cleaned_text:
         return "Low"
 
+    # Rule-based detection for prolonged essential-service
+    # disruptions and other potentially urgent complaints.
+    high_urgency_phrases = [
+        "no water",
+        "water supply stopped",
+        "no drinking water",
+        "no electricity",
+        "power outage",
+        "no power",
+        "sewage overflow",
+        "sewage leaking",
+        "open manhole",
+        "gas leak",
+        "fire outbreak",
+        "building collapse",
+        "bridge collapse"
+    ]
+
+    # Detect prolonged service disruptions.
+    duration_phrases = [
+        "days",
+        "weeks",
+        "months",
+        "day",
+        "week",
+        "month"
+    ]
+
+    has_urgent_phrase = any(
+        phrase in cleaned_text
+        for phrase in high_urgency_phrases
+    )
+
+    has_duration = any(
+        phrase in cleaned_text
+        for phrase in duration_phrases
+    )
+
+    if has_urgent_phrase and has_duration:
+        return "High"
+
+    # Use the existing trained model for other complaints.
     text_vector = urgency_vectorizer.transform(
         [cleaned_text]
     )
@@ -135,32 +177,23 @@ def predict_urgency(text: str) -> str:
     )
 
     return str(prediction[0])
-
-
 # ============================================================
 # COMPLETE NLP ANALYSIS
 # ============================================================
 
 def analyze_text(text: str) -> dict:
     """
-    Run the available CivicVoice NLP analysis
+    Run sentiment analysis and urgency prediction
     on a single citizen complaint.
     """
 
     cleaned_text = clean_text(text)
 
     if not cleaned_text:
-        raise ValueError(
-            "Complaint text cannot be empty."
-        )
+        raise ValueError("Complaint text cannot be empty.")
 
-    sentiment_result = analyze_sentiment(
-        cleaned_text
-    )
-
-    urgency_result = predict_urgency(
-        cleaned_text
-    )
+    sentiment_result = analyze_sentiment(cleaned_text)
+    urgency_result = predict_urgency(cleaned_text)
 
     return {
         "text": text,

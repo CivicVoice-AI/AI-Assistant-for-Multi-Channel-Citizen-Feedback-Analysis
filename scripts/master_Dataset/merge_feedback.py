@@ -1,17 +1,20 @@
+
 import pandas as pd
 from pathlib import Path
 
 
 # ============================================================
-# Paths
+# PATHS
 # ============================================================
 
 PROCESSED_DIR = Path("datasets/processed")
 MASTER_DIR = Path("datasets/masterd")
 
 OUTPUT_FILE = MASTER_DIR / "master_feedback.csv"
+
+
 # ============================================================
-# Required master schema
+# STANDARD MASTER DATASET SCHEMA
 # ============================================================
 
 MASTER_COLUMNS = [
@@ -26,10 +29,12 @@ MASTER_COLUMNS = [
 
 
 # ============================================================
-# Helper functions
+# HELPER FUNCTIONS
 # ============================================================
 
 def clean_text(series):
+    """Normalize whitespace without removing useful text."""
+
     return (
         series
         .fillna("")
@@ -40,6 +45,8 @@ def clean_text(series):
 
 
 def clean_column(series):
+    """Convert missing values to empty strings and trim whitespace."""
+
     return (
         series
         .fillna("")
@@ -48,9 +55,38 @@ def clean_column(series):
     )
 
 
+def validate_file(file_path):
+    """Ensure an input dataset exists before loading it."""
+
+    if not file_path.exists():
+        raise FileNotFoundError(
+            f"Required dataset not found: {file_path}"
+        )
+
+
+# ============================================================
+# TWITTER DATASET
+# ============================================================
+
 def normalize_twitter():
     file = PROCESSED_DIR / "twitter_clean.csv"
+    validate_file(file)
+
     df = pd.read_csv(file, dtype=str)
+
+    required = [
+        "feedback_id",
+        "source",
+        "timestamp",
+        "text",
+        "organization",
+        "state",
+    ]
+
+    missing = [column for column in required if column not in df.columns]
+
+    if missing:
+        raise ValueError(f"Twitter dataset is missing columns: {missing}")
 
     clean = pd.DataFrame({
         "feedback_id": df["feedback_id"],
@@ -65,37 +101,48 @@ def normalize_twitter():
     return clean
 
 
-def normalize_cpgrams():
-    file = PROCESSED_DIR / "cpgrams_clean.csv"
-    df = pd.read_csv(file, dtype=str)
-
-    clean = pd.DataFrame({
-        "feedback_id": df["feedback_id"],
-        "source": df["source"],
-        "timestamp": df["timestamp"],
-        "text": df["text"],
-        "organization": df["organization"],
-        "loc": df["district"],
-        "urgency": "",
-    })
-
-    return clean
-
+# ============================================================
+# EMAIL DATASET
+# ============================================================
 
 def normalize_email():
     file = PROCESSED_DIR / "email_clean.csv"
+    validate_file(file)
+
     df = pd.read_csv(file, dtype=str)
 
-    clean = df[MASTER_COLUMNS].copy()
+    missing = [column for column in MASTER_COLUMNS if column not in df.columns]
 
-    return clean
+    if missing:
+        raise ValueError(f"Email dataset is missing columns: {missing}")
 
-    
+    return df[MASTER_COLUMNS].copy()
 
+
+# ============================================================
+# SURVEY DATASET
+# ============================================================
 
 def normalize_survey():
     file = PROCESSED_DIR / "survey_clean.csv"
+    validate_file(file)
+
     df = pd.read_csv(file, dtype=str)
+
+    required = [
+        "feedback_id",
+        "source",
+        "timestamp",
+        "text",
+        "service",
+        "district",
+        "urgency",
+    ]
+
+    missing = [column for column in required if column not in df.columns]
+
+    if missing:
+        raise ValueError(f"Survey dataset is missing columns: {missing}")
 
     clean = pd.DataFrame({
         "feedback_id": df["feedback_id"],
@@ -110,109 +157,93 @@ def normalize_survey():
     return clean
 
 
-def normalize_bengaluru():
-    file = PROCESSED_DIR / "local_complaints_bengaluru_clean.csv"
-    df = pd.read_csv(file, dtype=str)
-
-    clean = df[MASTER_COLUMNS].copy()
-
-    return clean
-
-
 # ============================================================
-# Main merge
+# MAIN MERGE
 # ============================================================
 
 def main():
 
-    print("=" * 60)
-    print("CITIZEN FEEDBACK MASTER DATASET CREATION")
-    print("=" * 60)
+    print("=" * 65)
+    print("CIVICVOICE - MASTER FEEDBACK DATASET CREATION")
+    print("=" * 65)
 
-    print("\nLoading and normalizing datasets...")
+    print("\nLoading and normalizing available datasets...\n")
 
+    # Load available datasets
     twitter = normalize_twitter()
-    print(f"Twitter:       {len(twitter):,} rows")
-
-    cpgrams = normalize_cpgrams()
-    print(f"CPGRAMS:       {len(cpgrams):,} rows")
+    print(f"Twitter: {len(twitter):,} rows")
 
     email = normalize_email()
-    print(f"Email:         {len(email):,} rows")
+    print(f"Email:   {len(email):,} rows")
 
     survey = normalize_survey()
-    print(f"Survey:        {len(survey):,} rows")
-
-    bengaluru = normalize_bengaluru()
-    print(f"Bengaluru:     {len(bengaluru):,} rows")
-
+    print(f"Survey:  {len(survey):,} rows")
 
     # --------------------------------------------------------
-    # Combine
+    # COMBINE DATASETS
     # --------------------------------------------------------
 
     master = pd.concat(
-        [
-            twitter,
-            cpgrams,
-            email,
-            survey,
-            bengaluru,
-        ],
+        [twitter, email, survey],
         ignore_index=True
     )
 
+    print(f"\nTotal rows before cleaning: {len(master):,}")
 
     # --------------------------------------------------------
-    # Basic cleaning
+    # STANDARDIZE TEXT AND COLUMNS
     # --------------------------------------------------------
 
-    master["feedback_id"] = clean_column(master["feedback_id"])
-    master["source"] = clean_column(master["source"])
+    for column in [
+        "feedback_id",
+        "source",
+        "organization",
+        "loc",
+        "urgency",
+    ]:
+        master[column] = clean_column(master[column])
+
     master["text"] = clean_text(master["text"])
-    master["organization"] = clean_column(master["organization"])
-    master["loc"] = clean_column(master["loc"])
-    master["urgency"] = clean_column(master["urgency"])
 
+    # --------------------------------------------------------
+    # NORMALIZE TIMESTAMPS
+    # --------------------------------------------------------
 
-    # Convert timestamps
     master["timestamp"] = pd.to_datetime(
-    master["timestamp"],
-    errors="coerce",
-    utc=True,
-    format="mixed"
-)
+        master["timestamp"],
+        errors="coerce",
+        utc=True,
+        format="mixed"
+    )
 
+    invalid_timestamps = master["timestamp"].isna().sum()
 
     # --------------------------------------------------------
-    # Remove completely empty feedback text
+    # REMOVE EMPTY FEEDBACK
     # --------------------------------------------------------
 
-    before_empty = len(master)
+    rows_before = len(master)
 
     master = master[
         master["text"].str.strip() != ""
     ].copy()
 
-    removed_empty = before_empty - len(master)
-
+    removed_empty = rows_before - len(master)
 
     # --------------------------------------------------------
-    # Check duplicate feedback IDs
+    # CHECK DUPLICATE FEEDBACK IDS
     # --------------------------------------------------------
 
     duplicate_count = master["feedback_id"].duplicated().sum()
 
-
     # --------------------------------------------------------
-    # Ensure exact column order
+    # STANDARDIZE COLUMN ORDER
     # --------------------------------------------------------
 
     master = master[MASTER_COLUMNS]
 
-
     # --------------------------------------------------------
-    # Save
+    # SAVE MASTER DATASET
     # --------------------------------------------------------
 
     MASTER_DIR.mkdir(parents=True, exist_ok=True)
@@ -220,25 +251,26 @@ def main():
     master.to_csv(
         OUTPUT_FILE,
         index=False,
-        encoding="utf-8"
+        encoding="utf-8-sig"
     )
 
+    # --------------------------------------------------------
+    # REPORT
+    # --------------------------------------------------------
 
-    # ========================================================
-    # Report
-    # ========================================================
+    print("\n" + "=" * 65)
+    print("MASTER DATASET CREATION COMPLETED")
+    print("=" * 65)
 
-    print("\n" + "=" * 60)
-    print("MERGE COMPLETED")
-    print("=" * 60)
-
-    print(f"\nMaster dataset: {OUTPUT_FILE}")
-    print(f"Final shape:    {master.shape}")
+    print(f"\nOutput file: {OUTPUT_FILE}")
+    print(f"Final rows:  {len(master):,}")
+    print(f"Columns:     {len(master.columns)}")
 
     print(f"\nEmpty-text rows removed: {removed_empty:,}")
-    print(f"Duplicate feedback IDs: {duplicate_count:,}")
+    print(f"Invalid timestamps:     {invalid_timestamps:,}")
+    print(f"Duplicate feedback IDs:  {duplicate_count:,}")
 
-    print("\nColumns:")
+    print("\nFinal columns:")
     print(master.columns.tolist())
 
     print("\nRecords by source:")
@@ -252,12 +284,12 @@ def main():
         .to_string()
     )
 
-    print("\nFirst 5 rows:")
+    print("\nFirst five records:")
     print(master.head().to_string(index=False))
 
-    print("\n" + "=" * 60)
-    print("MASTER DATASET READY")
-    print("=" * 60)
+    print("\n" + "=" * 65)
+    print("CIVICVOICE MASTER DATASET READY")
+    print("=" * 65)
 
 
 if __name__ == "__main__":
