@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIVICVOICE | Report an Issue</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f3f6fa;
+    color: #172b4d;
+}
+
+header {
+    background: #142d4e;
+    color: white;
+    padding: 22px 8%;
+}
+
+header h2 { margin: 0; letter-spacing: 2px; }
+
+.container {
+    max-width: 650px;
+    margin: 45px auto;
+    padding: 32px;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 5px 25px rgba(0,0,0,.07);
+}
+
+h1 { margin-top: 0; }
+
+.subtitle {
+    color: #68778b;
+    margin-bottom: 28px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin: 18px 0 8px;
+}
+
+input, textarea, select {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #d5dce5;
+    border-radius: 7px;
+    font-size: 15px;
+}
+
+textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    border-radius: 7px;
+    padding: 13px 18px;
+    font-size: 15px;
+}
+
+.location-btn {
+    margin-top: 10px;
+    background: #e8f0fe;
+    color: #174ea6;
+}
+
+.submit-btn {
+    width: 100%;
+    margin-top: 25px;
+    background: #176b57;
+    color: white;
+    font-weight: bold;
+}
+
+button:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+#message {
+    margin-top: 18px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+footer {
+    text-align: center;
+    color: #78869a;
+    padding: 20px;
+    font-size: 13px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h2>CIVICVOICE</h2>
+</header>
+
+<div class="container">
+    <h1>Report a Civic Issue</h1>
+    <p class="subtitle">
+        Your voice matters. Report a local problem and help improve your community.
+    </p>
+
+    <form id="complaintForm">
+
+        <label for="category">Complaint Category *</label>
+        <select id="category" required>
+            <option value="">Select a category</option>
+            <option>Roads & Potholes</option>
+            <option>Water Supply</option>
+            <option>Electricity</option>
+            <option>Garbage Collection</option>
+            <option>Drainage & Sewage</option>
+            <option>Streetlights</option>
+            <option>Public Safety</option>
+            <option>Other</option>
+        </select>
+
+        <label for="title">Complaint Title *</label>
+        <input id="title" type="text" maxlength="150"
+               placeholder="Example: Damaged road near bus stop" required>
+
+        <label for="description">Complaint Description *</label>
+        <textarea id="description" maxlength="9000"
+                  placeholder="Describe the issue in detail..." required></textarea>
+
+        <label for="location">Location *</label>
+        <input id="location" type="text" maxlength="150"
+               placeholder="Enter area, street or locality" required>
+
+        <button type="button" class="location-btn" id="locationBtn">
+            📍 Use My Current Location
+        </button>
+
+        <button type="submit" class="submit-btn" id="submitBtn">
+            Submit Complaint
+        </button>
+
+        <div id="message" role="status"></div>
+    </form>
+</div>
+
+<footer>
+    CIVICVOICE — Making every citizen's voice count.
+</footer>
+
+<script>
+const API = "https://civicvoice-api-production-5fb1.up.railway.app";
+
+const form = document.getElementById("complaintForm");
+const message = document.getElementById("message");
+const submitBtn = document.getElementById("submitBtn");
+
+document.getElementById("locationBtn").addEventListener("click", () => {
+    if (!navigator.geolocation) {
+        message.textContent = "Location services are not supported by this browser.";
+        return;
+    }
+
+    message.textContent = "Getting your location...";
+
+    navigator.geolocation.getCurrentPosition(
+        async position => {
+            const { latitude, longitude } = position.coords;
+            document.getElementById("location").value =
+                `Latitude: ${latitude.toFixed(6)}, Longitude: ${longitude.toFixed(6)}`;
+            message.textContent = "Location captured successfully.";
+        },
+        () => {
+            message.textContent =
+                "Could not access your location. Please enter it manually.";
+        }
+    );
+});
+
+form.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const category = document.getElementById("category").value;
+    const title = document.getElementById("title").value.trim();
+    const description = document.getElementById("description").value.trim();
+    const location = document.getElementById("location").value.trim();
+
+    if (!category || !title || !description || !location) {
+        message.textContent = "Please complete all required fields.";
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Submitting...";
+    message.textContent = "";
+
+    try {
+        const response = await fetch(`${API}/feedback`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                text: `Category: ${category}\nTitle: ${title}\nDescription: ${description}`,
+                source: "Citizen Portal",
+                location: location,
+                organization: category
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.detail || "Submission failed.");
+        }
+
+        message.innerHTML =
+            `<strong>Complaint submitted successfully!</strong><br>
+             Your Complaint ID: <strong>${result.feedback_id}</strong><br>
+             Urgency: <strong>${result.analysis.urgency}</strong>`;
+
+        form.reset();
+
+    } catch (error) {
+        message.textContent = "Unable to submit: " + error.message;
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit Complaint";
+    }
+});
+</script>
+
+</body>
+</html>
